@@ -1,4 +1,4 @@
-export function validateEnv() {
+export function validateEnv(): boolean {
   const required = [
     'DATABASE_URL',
     'ADMIN_EMAIL',
@@ -8,6 +8,9 @@ export function validateEnv() {
   const missing = required.filter(key => !process.env[key])
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+    console.warn(`Missing required environment variables: ${missing.join(', ')}`)
+    return false
   }
+
+  return true
 }
