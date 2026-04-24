@@ -1,39 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { db } from '@/lib/db'
+import { createAdminSession } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    const adminEmail = process.env.ADMIN_EMAIL
+    const passwordHash = process.env.ADMIN_PASSWORD_HASH
+
+    if (!adminEmail || !passwordHash) {
+      return NextResponse.json(
+        { error: 'Admin environment variables not configured' },
+        { status: 500 }
+      )
     }
 
-    const admin = await db.adminUser.findUnique({
-      where: { email },
-    })
-
-    if (!admin) {
+    if (email !== adminEmail) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    const isValid = await bcrypt.compare(password, admin.password)
+    const isValid = await bcrypt.compare(password, passwordHash)
+
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Set session cookie
-    const response = NextResponse.json({ success: true })
-    response.cookies.set('admin-session', 'authenticated', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24, // 24 hours
-    })
-
-    return response
+    return await createAdminSession(email)
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
