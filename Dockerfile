@@ -1,23 +1,32 @@
-# Use Node.js 20 Alpine for smaller image
-FROM node:20-alpine
+FROM node:20-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Instalar OpenSSL necessário para Prisma
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Copiar dependências
 COPY package*.json ./
 
-# Install dependencies
+# Instalar dependências
 RUN npm install
 
-# Copy source code
+# Copiar código
 COPY . .
 
-# Generate Prisma Client
+# Gerar Prisma Client
 RUN npx prisma generate
 
-# Build the application
+# Build Next.js
 RUN npm run build
+
+# Expor porta
+EXPOSE 3000
+
+# Rodar aplicação standalone
+CMD ["node", ".next/standalone/server.js"]
 
 # Expose port
 EXPOSE 3000

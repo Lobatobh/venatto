@@ -26,6 +26,7 @@ Configure no Dokploy:
 DATABASE_URL=file:/data/venatto/prod.db
 ADMIN_EMAIL=admin@venatto.com.br
 ADMIN_PASSWORD_HASH=SEU_HASH_BCRYPT_AQUI
+ADMIN_SESSION_SECRET=SEU_SECRET_JWT_AQUI
 NODE_ENV=production
 ```
 
@@ -48,9 +49,23 @@ No Dokploy, monte os volumes:
 Configure um cron job no servidor:
 
 ```bash
+
+```bash
 # Executar diariamente às 2:00
 0 2 * * * /path/to/project/scripts/backup.sh
 ```
+
+## Compatibilidade Técnica
+
+### Docker Image
+- **Base**: `node:20-slim` (Debian)
+- **Motivo**: Compatibilidade total com Prisma (OpenSSL + glibc)
+- **Alternativa**: Evita problemas com Alpine (musl) e libssl
+
+### Prisma
+- **Engine**: Query engine compatível com Linux Debian
+- **OpenSSL**: Instalado automaticamente no container
+- **Database**: SQLite com volumes persistentes
 
 ## Verificação
 
@@ -68,3 +83,4 @@ Após deploy:
 - **Uploads falham**: Verifique se volume `/data/uploads` está montado
 - **Erro 401**: Verifique variáveis de ambiente
 - **SEO não atualiza**: Aguarde revalidação do cache
+- **Erro Prisma**: Verifique se OpenSSL está instalado (incluído na imagem)
