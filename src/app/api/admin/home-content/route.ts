@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
-import { isAuthenticated } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
 
 const homeContentSchema = z.object({
   heroTitle: z.string().min(1),
@@ -30,9 +30,8 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = requireAuth(request)
+  if (authError) return authError
 
   try {
     const body = await request.json()

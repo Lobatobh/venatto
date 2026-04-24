@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { db } from '@/lib/db'
-import { isAuthenticated } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const UPLOAD_DIR = '/data/uploads'
 
 export async function GET() {
   try {
@@ -20,9 +21,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = requireAuth(request)
+  if (authError) return authError
 
   try {
     const formData = await request.formData()
@@ -41,14 +41,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    await mkdir(uploadsDir, { recursive: true })
+    await mkdir(UPLOAD_DIR, { recursive: true })
 
     // Generate unique filename
     const timestamp = Date.now()
     const extension = file.name.split('.').pop()
     const filename = `${timestamp}-${file.name}`
-    const filepath = join(uploadsDir, filename)
+    const filepath = join(UPLOAD_DIR, filename)
 
     // Save file
     const bytes = await file.arrayBuffer()
@@ -73,9 +72,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!isAuthenticated(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const authError = requireAuth(request)
+  if (authError) return authError
 
   try {
     const { searchParams } = new URL(request.url)
@@ -94,7 +92,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete file
-    const filepath = join(process.cwd(), 'public', asset.url)
+    const filepath = join(UPLOAD_DIR, asset.filename)
     try {
       const { unlink } = await import('fs/promises')
       await unlink(filepath)

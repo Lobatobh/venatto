@@ -55,3 +55,6 @@ server.log
 
 prisma/dev.db
 *.db
+
+# Production data (should be mounted as volumes)
+data/
