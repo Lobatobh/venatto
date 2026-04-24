@@ -18,6 +18,47 @@ import {
   ArrowUp,
 } from "lucide-react";
 
+/* ───────────── Dynamic Content ───────────── */
+interface HomeContent {
+  heroTitle: string;
+  heroSubtitle: string;
+  heroButtonText: string;
+  heroButtonLink: string;
+  heroImageUrl: string;
+  aboutText: string;
+  differentialsText: string;
+  projectsText: string;
+  processText: string;
+  contactText: string;
+}
+
+interface SiteSettings {
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+}
+
+const defaultHomeContent: HomeContent = {
+  heroTitle: "Elegância feita sob medida",
+  heroSubtitle: "Mobiliário planejado de alto padrão para ambientes exclusivos",
+  heroButtonText: "Solicitar projeto",
+  heroButtonLink: "#contato",
+  heroImageUrl: "/images/hero.png",
+  aboutText: "A Venatto desenvolve ambientes planejados de alto padrão, unindo design, funcionalidade e materiais nobres para criar espaços únicos. Cada projeto é pensado para refletir a personalidade e o estilo de vida de nossos clientes, transformando sonhos em realidade com excelência e sofisticação.",
+  differentialsText: "Projetos exclusivos, Atendimento personalizado, Materiais premium, Execução impecável",
+  projectsText: "Portfólio de projetos realizados",
+  processText: "Entendimento, Projeto 3D, Produção, Entrega",
+  contactText: "Transforme seu ambiente com a Venatto",
+};
+
+const defaultSiteSettings: SiteSettings = {
+  primaryColor: "#1F3D2B",
+  secondaryColor: "#F5F3EF",
+  accentColor: "#C6A46C",
+};
+
 /* ───────────── Intersection Observer Hook ───────────── */
 function useScrollReveal(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -166,7 +207,7 @@ function Navigation() {
 }
 
 /* ───────────── HERO ───────────── */
-function Hero() {
+function Hero({ content }: { content: HomeContent }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -179,7 +220,7 @@ function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/hero.png"
+          src={content.heroImageUrl}
           alt="Ambiente sofisticado com móveis planejados VENATTO"
           fill
           className="object-cover object-center"
@@ -202,9 +243,9 @@ function Hero() {
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-wide leading-tight"
             style={{ fontFamily: "var(--font-cinzel)", color: "#1F3D2B" }}
           >
-            Elegância feita
+            {content.heroTitle.split(' ').slice(0, -2).join(' ')}
             <br />
-            <span className="text-gradient-gold">sob medida</span>
+            <span className="text-gradient-gold">{content.heroTitle.split(' ').slice(-2).join(' ')}</span>
           </h1>
         </motion.div>
 
@@ -215,7 +256,7 @@ function Hero() {
           className="text-sm sm:text-base md:text-lg tracking-wide text-[#1F3D2B]/60 mb-10 max-w-2xl mx-auto"
           style={{ fontFamily: "var(--font-montserrat)", fontWeight: 300 }}
         >
-          Mobiliário planejado de alto padrão para ambientes exclusivos
+          {content.heroSubtitle}
         </motion.p>
 
         <motion.div
@@ -231,7 +272,7 @@ function Hero() {
             }
             className="btn-venatto px-10 py-4 bg-[#1F3D2B] text-[#F5F3EF] text-xs sm:text-sm tracking-[0.25em] uppercase hover:bg-[#C6A46C] cursor-pointer"
           >
-            Solicitar projeto
+            {content.heroButtonText}
           </button>
         </motion.div>
 
@@ -255,7 +296,7 @@ function Hero() {
 }
 
 /* ───────────── SOBRE ───────────── */
-function Sobre() {
+function Sobre({ content }: { content: HomeContent }) {
   return (
     <section id="sobre" className="py-24 md:py-36 px-6 md:px-12">
       <div className="max-w-6xl mx-auto">
@@ -280,11 +321,7 @@ function Sobre() {
               className="text-sm sm:text-base md:text-lg leading-relaxed text-[#1F3D2B]/65"
               style={{ fontFamily: "var(--font-montserrat)", fontWeight: 300 }}
             >
-              A Venatto desenvolve ambientes planejados de alto padrão, unindo
-              design, funcionalidade e materiais nobres para criar espaços
-              únicos. Cada projeto é pensado para refletir a personalidade e o
-              estilo de vida de nossos clientes, transformando sonhos em
-              realidade com excelência e sofisticação.
+              {content.aboutText}
             </p>
           </div>
         </RevealSection>
@@ -814,16 +851,39 @@ function BackToTop() {
 
 /* ───────────── MAIN PAGE ───────────── */
 export default function Home() {
+  const [homeContent, setHomeContent] = useState<HomeContent>(defaultHomeContent);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
+
+  useEffect(() => {
+    // Fetch dynamic content
+    Promise.all([
+      fetch('/api/admin/home-content').then(res => res.ok ? res.json() : defaultHomeContent),
+      fetch('/api/admin/site-settings').then(res => res.ok ? res.json() : defaultSiteSettings),
+    ]).then(([content, settings]) => {
+      setHomeContent(content);
+      setSiteSettings(settings);
+    }).catch(() => {
+      // Use defaults if fetch fails
+    });
+  }, []);
+
+  // Apply dynamic colors
+  useEffect(() => {
+    document.documentElement.style.setProperty('--primary-color', siteSettings.primaryColor);
+    document.documentElement.style.setProperty('--secondary-color', siteSettings.secondaryColor);
+    document.documentElement.style.setProperty('--accent-color', siteSettings.accentColor);
+  }, [siteSettings]);
+
   return (
     <main className="min-h-screen">
       <Navigation />
-      <Hero />
-      <Sobre />
-      <Diferenciais />
-      <Projetos />
-      <Processo />
+      <Hero content={homeContent} />
+      <Sobre content={homeContent} />
+      <Diferenciais content={homeContent} />
+      <Projetos content={homeContent} />
+      <Processo content={homeContent} />
       <Experiencia />
-      <CtaFinal />
+      <CtaFinal content={homeContent} />
       <Footer />
       <WhatsAppButton />
       <BackToTop />
