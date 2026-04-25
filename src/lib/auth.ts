@@ -36,17 +36,19 @@ export function isAuthenticated(request: NextRequest): boolean {
   )
 
   const token = tokenFromNext || tokenFromHeader
+  const valid = token ? verifyAdminSessionToken(token) : false
 
   if (process.env.DEBUG_AUTH === 'true') {
     console.log('[AUTH DEBUG]', {
       hasNextCookie: Boolean(tokenFromNext),
       hasHeaderCookie: Boolean(tokenFromHeader),
+      hasToken: Boolean(token),
       hasSecret: Boolean(process.env.ADMIN_SESSION_SECRET),
-      valid: token ? verifyAdminSessionToken(token) : false,
+      valid,
     })
   }
 
-  return token ? verifyAdminSessionToken(token) : false
+  return valid
 }
 
 export function requireAuth(request: NextRequest): NextResponse | null {
