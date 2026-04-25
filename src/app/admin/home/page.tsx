@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -71,12 +71,12 @@ const defaultHomeData: AdminHomeData = {
   }
 }
 
-const sections: { key: SectionKey; label: string; description: string }[] = [
-  { key: 'hero', label: 'Hero', description: 'Título, destaque e botão principal' },
-  { key: 'about', label: 'Sobre', description: 'Título e texto da seção sobre' },
-  { key: 'cta', label: 'CTA', description: 'Chamada para ação final' },
-  { key: 'contact', label: 'Contato', description: 'Informações de contato' },
-  { key: 'branding', label: 'Branding', description: 'Cores do visual' }
+const sections: { key: SectionKey; label: string; description: string; icon: string }[] = [
+  { key: 'hero', label: 'Hero', description: 'Título, destaque e botão principal', icon: '⭐' },
+  { key: 'about', label: 'Sobre', description: 'Título e texto da seção sobre', icon: '🏠' },
+  { key: 'cta', label: 'CTA', description: 'Chamada para ação final', icon: '🚀' },
+  { key: 'contact', label: 'Contato', description: 'Informações de contato', icon: '📞' },
+  { key: 'branding', label: 'Branding', description: 'Cores do visual', icon: '🎨' }
 ]
 
 export default function AdminHomePage() {
@@ -86,10 +86,7 @@ export default function AdminHomePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-
-  useEffect(() => {
-    fetchHomeContent()
-  }, [])
+  const [isDirty, setIsDirty] = useState(false)
 
   const fetchHomeContent = async () => {
     try {
@@ -107,6 +104,11 @@ export default function AdminHomePage() {
     }
   }
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchHomeContent()
+  }, [])
+
   const updateField = (section: SectionKey, field: string, value: string) => {
     setContent(prev => ({
       ...prev,
@@ -115,9 +117,12 @@ export default function AdminHomePage() {
         [field]: value
       }
     }))
+    setIsDirty(true)
+    setSuccess('')
+    setError('')
   }
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
     setSaving(true)
     setError('')
@@ -133,6 +138,7 @@ export default function AdminHomePage() {
 
       if (response.ok) {
         setSuccess('Conteúdo salvo com sucesso!')
+        setIsDirty(false)
       } else {
         const data = await response.json()
         setError(data.error || 'Erro ao salvar')
@@ -155,305 +161,362 @@ export default function AdminHomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-6">
-      <div className="mx-auto max-w-[1600px] space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <main className="min-h-screen bg-slate-50">
+      <div className="sticky top-0 z-30 border-b border-slate-200 bg-slate-50/95 backdrop-blur-lg">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500">Admin Visual</p>
-            <h1 className="text-3xl font-semibold text-slate-900">Editor Visual da Home</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600">Edite cada seção da página inicial com preview ao vivo e salve seu conteúdo diretamente no servidor.</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Editor Visual Venatto</p>
+            <h1 className="text-2xl font-semibold text-slate-900">Construtor de Home Premium</h1>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/admin" className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-50">Voltar ao painel</Link>
-            <Link href="/" target="_blank" className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Visualizar site</Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${saving ? 'bg-amber-100 text-amber-800' : isDirty ? 'bg-slate-100 text-slate-800' : 'bg-emerald-100 text-emerald-800'}`}>
+              {saving ? 'Salvando...' : isDirty ? 'Alterações pendentes' : 'Salvo'}
+            </span>
+            <Link href="/admin" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100">Voltar</Link>
+            <Link href="/" target="_blank" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Visualizar site</Link>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            >
+              Salvar alterações
+            </button>
           </div>
         </div>
+      </div>
 
-        <div className="grid gap-6 xl:grid-cols-[260px_minmax(1fr,_1.2fr)_420px]">
-          <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">Seções</h2>
-            <div className="space-y-2">
-              {sections.map(section => (
-                <button
-                  key={section.key}
-                  type="button"
-                  onClick={() => setSelectedSection(section.key)}
-                  className={`block w-full rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${selectedSection === section.key ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'}`}
-                >
-                  <span>{section.label}</span>
-                  <p className="mt-1 text-xs font-normal text-slate-500">{section.description}</p>
-                </button>
-              ))}
+      <div className="mx-auto grid min-h-screen max-w-[1600px] gap-6 px-6 py-6 lg:grid-cols-[280px_1fr_480px]">
+        <aside className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-500">Painel</h2>
+              <p className="mt-2 text-sm text-slate-600">Selecione uma seção para editar.</p>
             </div>
-          </aside>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-600">Editor</span>
+          </div>
+          <div className="mt-6 flex gap-3 overflow-x-auto pb-2 lg:block lg:overflow-visible">
+            {sections.map(section => (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => setSelectedSection(section.key)}
+                className={`flex min-w-[180px] items-start gap-3 rounded-3xl border px-4 py-4 text-left transition ${selectedSection === section.key ? 'border-slate-900 bg-slate-900 text-white shadow-sm' : 'border-slate-200 bg-slate-50 text-slate-800 hover:border-slate-300 hover:bg-white'}`}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl text-lg ${selectedSection === section.key ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-800'}`}>
+                  {section.icon}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{section.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">{section.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </aside>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="space-y-6">
+          <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">{sections.find(item => item.key === selectedSection)?.label}</h2>
-                <p className="text-sm text-slate-500">Edite os campos da seção selecionada.</p>
+                <h2 className="text-xl font-semibold text-slate-900">Seção {sections.find(item => item.key === selectedSection)?.label}</h2>
+                <p className="text-sm text-slate-500">Ajuste os campos da seção selecionada com precisão.</p>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs uppercase tracking-[0.16em] text-slate-600">{saving ? 'Salvando...' : 'Pronto para editar'}</div>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-600">{selectedSection}</span>
+                {success && <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">{success}</span>}
+              </div>
             </div>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {selectedSection === 'hero' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Título</label>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {selectedSection === 'hero' && (
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">Hero</h3>
+                  <p className="mt-2 text-sm text-slate-600">Configurações do banner principal da home.</p>
+                </div>
+                <div className="grid gap-6">
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Título principal</label>
                     <input
                       value={content.hero.title}
                       onChange={event => updateField('hero', 'title', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                     />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Destaque</label>
-                    <input
-                      value={content.hero.highlight}
-                      onChange={event => updateField('hero', 'highlight', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <label className="text-sm font-medium text-slate-700">Destaque</label>
+                      <input
+                        value={content.hero.highlight}
+                        onChange={event => updateField('hero', 'highlight', event.target.value)}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                      />
+                    </div>
+                    <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
+                      <input
+                        value={content.hero.backgroundImage}
+                        onChange={event => updateField('hero', 'backgroundImage', event.target.value)}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                      />
+                    </div>
                   </div>
-                  <div>
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                     <label className="text-sm font-medium text-slate-700">Subtítulo</label>
                     <textarea
                       value={content.hero.subtitle}
                       onChange={event => updateField('hero', 'subtitle', event.target.value)}
-                      rows={3}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                      rows={4}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                     />
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <label className="text-sm font-medium text-slate-700">Texto do botão</label>
                       <input
                         value={content.hero.buttonText}
                         onChange={event => updateField('hero', 'buttonText', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                       />
                     </div>
-                    <div>
+                    <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <label className="text-sm font-medium text-slate-700">Link do botão</label>
                       <input
                         value={content.hero.buttonLink}
                         onChange={event => updateField('hero', 'buttonLink', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
-                    <input
-                      value={content.hero.backgroundImage}
-                      onChange={event => updateField('hero', 'backgroundImage', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {selectedSection === 'about' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Eyebrow</label>
-                    <input
-                      value={content.about.eyebrow}
-                      onChange={event => updateField('about', 'eyebrow', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Título</label>
-                    <input
-                      value={content.about.title}
-                      onChange={event => updateField('about', 'title', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Texto</label>
-                    <textarea
-                      value={content.about.text}
-                      onChange={event => updateField('about', 'text', event.target.value)}
-                      rows={4}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {selectedSection === 'cta' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Título</label>
-                    <input
-                      value={content.cta.title}
-                      onChange={event => updateField('cta', 'title', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Subtítulo</label>
-                    <input
-                      value={content.cta.subtitle}
-                      onChange={event => updateField('cta', 'subtitle', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Texto do botão</label>
-                      <input
-                        value={content.cta.buttonText}
-                        onChange={event => updateField('cta', 'buttonText', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Link do botão</label>
-                      <input
-                        value={content.cta.buttonLink}
-                        onChange={event => updateField('cta', 'buttonLink', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                       />
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {selectedSection === 'contact' && (
-                <div className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">WhatsApp</label>
-                      <input
-                        value={content.contact.whatsapp}
-                        onChange={event => updateField('contact', 'whatsapp', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Email</label>
-                      <input
-                        value={content.contact.email}
-                        onChange={event => updateField('contact', 'email', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
+            {selectedSection === 'about' && (
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">Sobre</h3>
+                  <p className="mt-2 text-sm text-slate-600">Configurações da seção institucional.</p>
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Eyebrow</label>
+                  <input
+                    value={content.about.eyebrow}
+                    onChange={event => updateField('about', 'eyebrow', event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Título</label>
+                  <input
+                    value={content.about.title}
+                    onChange={event => updateField('about', 'title', event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Texto</label>
+                  <textarea
+                    value={content.about.text}
+                    onChange={event => updateField('about', 'text', event.target.value)}
+                    rows={5}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedSection === 'cta' && (
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">CTA</h3>
+                  <p className="mt-2 text-sm text-slate-600">Configurações da chamada final.</p>
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Título</label>
+                  <input
+                    value={content.cta.title}
+                    onChange={event => updateField('cta', 'title', event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Subtítulo</label>
+                  <input
+                    value={content.cta.subtitle}
+                    onChange={event => updateField('cta', 'subtitle', event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Texto do botão</label>
+                    <input
+                      value={content.cta.buttonText}
+                      onChange={event => updateField('cta', 'buttonText', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Instagram</label>
-                      <input
-                        value={content.contact.instagram}
-                        onChange={event => updateField('contact', 'instagram', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Cidade</label>
-                      <input
-                        value={content.contact.city}
-                        onChange={event => updateField('contact', 'city', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Link do botão</label>
+                    <input
+                      value={content.cta.buttonLink}
+                      onChange={event => updateField('cta', 'buttonLink', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {selectedSection === 'branding' && (
-                <div className="space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Cor primária</label>
-                      <input
-                        type="text"
-                        value={content.branding.primaryColor}
-                        onChange={event => updateField('branding', 'primaryColor', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700">Cor secundária</label>
-                      <input
-                        type="text"
-                        value={content.branding.secondaryColor}
-                        onChange={event => updateField('branding', 'secondaryColor', event.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
-                    </div>
+            {selectedSection === 'contact' && (
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">Contato</h3>
+                  <p className="mt-2 text-sm text-slate-600">Defina os canais de contato exibidos na home.</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">WhatsApp</label>
+                    <input
+                      value={content.contact.whatsapp}
+                      onChange={event => updateField('contact', 'whatsapp', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700">Cor de destaque</label>
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <input
+                      value={content.contact.email}
+                      onChange={event => updateField('contact', 'email', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Instagram</label>
+                    <input
+                      value={content.contact.instagram}
+                      onChange={event => updateField('contact', 'instagram', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                  </div>
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Cidade</label>
+                    <input
+                      value={content.contact.city}
+                      onChange={event => updateField('contact', 'city', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedSection === 'branding' && (
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">Branding</h3>
+                  <p className="mt-2 text-sm text-slate-600">Ajuste as cores principais do visual.</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Cor primária</label>
                     <input
                       type="text"
-                      value={content.branding.accentColor}
-                      onChange={event => updateField('branding', 'accentColor', event.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                      value={content.branding.primaryColor}
+                      onChange={event => updateField('branding', 'primaryColor', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                  </div>
+                  <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <label className="text-sm font-medium text-slate-700">Cor secundária</label>
+                    <input
+                      type="text"
+                      value={content.branding.secondaryColor}
+                      onChange={event => updateField('branding', 'secondaryColor', event.target.value)}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                     />
                   </div>
                 </div>
-              )}
-
-              {error && <p className="text-sm text-red-600">{error}</p>}
-              {success && <p className="text-sm text-green-600">{success}</p>}
-
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? 'Salvando...' : 'Salvar alterações'}
-              </button>
-            </form>
-          </section>
-
-          <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">Preview ao vivo</h2>
-                <p className="text-sm text-slate-500">Veja como ficará a home antes de publicar.</p>
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs uppercase tracking-[0.16em] text-slate-600">Admin</span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="overflow-hidden rounded-3xl border border-slate-200" style={{ backgroundColor: content.branding.secondaryColor }}>
-                <div className="relative overflow-hidden px-6 py-10 text-center" style={{ backgroundColor: content.branding.primaryColor, color: '#fff' }}>
-                  <p className="text-sm uppercase tracking-[0.24em] text-slate-200">{content.hero.highlight || 'Destaque'}</p>
-                  <h3 className="mt-4 text-3xl font-semibold leading-tight">{content.hero.title}</h3>
-                  <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-100">{content.hero.subtitle}</p>
-                  <a
-                    href={content.hero.buttonLink || '#'}
-                    className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-                  >
-                    {content.hero.buttonText}
-                  </a>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Cor de destaque</label>
+                  <input
+                    type="text"
+                    value={content.branding.accentColor}
+                    onChange={event => updateField('branding', 'accentColor', event.target.value)}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                  />
                 </div>
               </div>
+            )}
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{content.about.eyebrow}</p>
+            <div className="space-y-3">
+              {error && <p className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p>}
+              {success && <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p>}
+            </div>
+          </form>
+        </section>
+
+        <aside className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Preview</p>
+              <h2 className="text-xl font-semibold text-slate-900">Como ficará a página</h2>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs uppercase tracking-[0.24em] text-slate-600">Visual real</span>
+          </div>
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100">
+            <div className="border-b border-slate-200 bg-white px-4 py-3">
+              <div className="flex h-9 items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                <div className="ml-3 h-2.5 w-24 rounded-full bg-slate-200" />
+              </div>
+            </div>
+            <div className="p-6" style={{ backgroundColor: content.branding.secondaryColor }}>
+              <div className="rounded-[24px] p-6" style={{ backgroundColor: content.branding.primaryColor, color: '#fff' }}>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-200">{content.hero.highlight}</p>
+                <h3 className="mt-4 text-3xl font-semibold leading-tight">{content.hero.title}</h3>
+                <p className="mt-4 max-w-xl text-sm leading-7 text-slate-100">{content.hero.subtitle}</p>
+                <a
+                  href={content.hero.buttonLink || '#'}
+                  className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                >
+                  {content.hero.buttonText}
+                </a>
+              </div>
+              <div className="mt-6 rounded-[24px] bg-white p-5 shadow-sm">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">{content.about.eyebrow}</p>
                 <h3 className="mt-2 text-xl font-semibold text-slate-900">{content.about.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{content.about.text}</p>
               </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-5" style={{ borderColor: content.branding.accentColor }}>
+              <div className="mt-6 rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm" style={{ borderColor: content.branding.accentColor }}>
                 <h3 className="text-xl font-semibold" style={{ color: content.branding.primaryColor }}>{content.cta.title}</h3>
                 <p className="mt-3 text-sm text-slate-600">{content.cta.subtitle}</p>
                 <a
                   href={content.cta.buttonLink || '#'}
-                  className="mt-5 inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white"
+                  className="mt-5 inline-flex rounded-full px-5 py-3 text-sm font-semibold text-white"
                   style={{ backgroundColor: content.branding.accentColor }}
                 >
                   {content.cta.buttonText}
                 </a>
               </div>
+              <div className="mt-6 rounded-[24px] bg-slate-50 p-5">
+                <p className="text-sm text-slate-500">Contato</p>
+                <div className="mt-3 space-y-2 text-sm text-slate-700">
+                  <p><span className="font-semibold">WhatsApp:</span> {content.contact.whatsapp || '—'}</p>
+                  <p><span className="font-semibold">Email:</span> {content.contact.email || '—'}</p>
+                  <p><span className="font-semibold">Instagram:</span> {content.contact.instagram || '—'}</p>
+                  <p><span className="font-semibold">Cidade:</span> {content.contact.city || '—'}</p>
+                </div>
+              </div>
             </div>
-          </aside>
-        </div>
+          </div>
+        </aside>
       </div>
     </main>
   )
