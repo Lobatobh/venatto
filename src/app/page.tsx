@@ -857,7 +857,7 @@ export default function Home() {
   useEffect(() => {
     // Fetch dynamic content
     Promise.all([
-      fetch('/api/admin/home-content').then(res => res.ok ? res.json() : defaultHomeContent),
+      fetch('/api/home').then(res => res.ok ? res.json() : defaultHomeContent),
       fetch('/api/admin/site-settings').then(res => res.ok ? res.json() : defaultSiteSettings),
     ]).then(([content, settings]) => {
       setHomeContent(content);

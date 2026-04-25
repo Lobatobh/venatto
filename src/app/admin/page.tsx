@@ -22,6 +22,9 @@ export default async function AdminPage() {
           <p className="font-medium text-slate-900">{email}</p>
         </div>
         <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+          <Link href="/admin/home" className="inline-flex justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+            Editar Página Inicial
+          </Link>
           <Link href="/api/admin/logout" className="inline-flex justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
             Sair
           </Link>
