@@ -1,113 +1,35 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FileText, Image, Palette, Search, LogOut } from 'lucide-react'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { ADMIN_SESSION_COOKIE, validateSessionToken } from '@/lib/admin-session'
 
-export default function AdminDashboard() {
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+export default async function AdminPage() {
+  const cookiesStore = await cookies()
+  const cookieValue = cookiesStore.get(ADMIN_SESSION_COOKIE)?.value
+  const email = cookieValue ? validateSessionToken(cookieValue) : null
 
-  useEffect(() => {
-    // Check if authenticated
-    fetch('/api/admin/home-content', { credentials: 'include' })
-      .then((res) => {
-        if (res.status === 401) {
-          router.push('/admin/login')
-        } else {
-          setLoading(false)
-        }
-      })
-      .catch(() => {
-        router.push('/admin/login')
-      })
-  }, [router])
-
-  const handleLogout = async () => {
-    await fetch('/api/admin/auth/logout', { method: 'POST' })
-    router.push('/admin/login')
-  }
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+  if (!email) {
+    redirect('/admin/login')
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">VENATTO Admin</h1>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-          </div>
+    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
+        <h1 className="text-3xl font-bold text-slate-900 mb-4">Painel Admin Venatto</h1>
+        <p className="text-slate-700 mb-6">Login realizado com sucesso.</p>
+        <div className="space-y-4">
+          <p className="text-slate-600">Usuário autenticado como:</p>
+          <p className="font-medium text-slate-900">{email}</p>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Home Content</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Manage homepage content</CardDescription>
-                <Link href="/admin/home">
-                  <Button className="mt-4 w-full">Edit</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Media</CardTitle>
-                <Image className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Upload and manage images</CardDescription>
-                <Link href="/admin/media">
-                  <Button className="mt-4 w-full">Manage</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Branding</CardTitle>
-                <Palette className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Colors and visual identity</CardDescription>
-                <Link href="/admin/branding">
-                  <Button className="mt-4 w-full">Edit</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">SEO</CardTitle>
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Search engine optimization</CardDescription>
-                <Link href="/admin/seo">
-                  <Button className="mt-4 w-full">Edit</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+          <Link href="/api/admin/logout" className="inline-flex justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+            Sair
+          </Link>
+          <Link href="/" className="inline-flex justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+            Voltar ao site
+          </Link>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   )
 }

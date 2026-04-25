@@ -15,7 +15,23 @@ const montserrat = Montserrat({
   weight: ["300", "400", "500", "600"],
 });
 
+// Force dynamic rendering to prevent build-time database access
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
+  // Check if environment variables are available (runtime only)
+  if (!process.env.DATABASE_URL || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH) {
+    return {
+      title: "VENATTO | Mobiliário Planejado de Alto Padrão",
+      description: "Especialistas em arquitetura e design de interiores",
+      keywords: ["arquitetura", "design", "interiores"],
+      authors: [{ name: "VENATTO" }],
+      icons: {
+        icon: "/favicon.ico",
+      },
+    };
+  }
+
   try {
     const seoSettings = await db.seoSettings.findFirst();
 
