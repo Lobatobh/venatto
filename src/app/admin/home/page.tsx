@@ -18,12 +18,14 @@ interface AdminHomeData {
     eyebrow: string
     title: string
     text: string
+    image: string
   }
   cta: {
     title: string
     subtitle: string
     buttonText: string
     buttonLink: string
+    backgroundImage: string
   }
   contact: {
     whatsapp: string
@@ -38,6 +40,21 @@ interface AdminHomeData {
   }
 }
 
+interface MediaItem {
+  id: string
+  type: 'image' | 'video' | 'file'
+  name: string
+  filename: string
+  url: string
+  mimeType: string
+  size: number
+  createdAt: string
+}
+
+interface MediaLibrary {
+  items: MediaItem[]
+}
+
 const defaultHomeData: AdminHomeData = {
   hero: {
     title: 'Elegância feita sob medida',
@@ -50,13 +67,15 @@ const defaultHomeData: AdminHomeData = {
   about: {
     eyebrow: 'Sobre a Venatto',
     title: 'Design que transforma espaços',
-    text: 'A Venatto desenvolve ambientes planejados de alto padrão, unindo design, funcionalidade e materiais nobres para criar espaços únicos. Cada projeto é pensado para refletir a personalidade e o estilo de vida de nossos clientes, transformando sonhos em realidade com excelência e sofisticação.'
+    text: 'A Venatto desenvolve ambientes planejados de alto padrão, unindo design, funcionalidade e materiais nobres para criar espaços únicos. Cada projeto é pensado para refletir a personalidade e o estilo de vida de nossos clientes, transformando sonhos em realidade com excelência e sofisticação.',
+    image: ''
   },
   cta: {
     title: 'Pronto para transformar seu espaço?',
     subtitle: 'Converse com a Venatto e inove seu ambiente com móveis planejados.',
     buttonText: 'Fale conosco',
-    buttonLink: '#contato'
+    buttonLink: '#contato',
+    backgroundImage: ''
   },
   contact: {
     whatsapp: '',
@@ -88,6 +107,10 @@ export default function AdminHomePage() {
   const [success, setSuccess] = useState('')
   const [isDirty, setIsDirty] = useState(false)
 
+  const [mediaLibrary, setMediaLibrary] = useState<MediaLibrary>({ items: [] })
+  const [showMediaModal, setShowMediaModal] = useState(false)
+  const [selectedField, setSelectedField] = useState<string>('')
+
   const fetchHomeContent = async () => {
     try {
       const response = await fetch('/api/admin/home', { credentials: 'include' })
@@ -102,6 +125,29 @@ export default function AdminHomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const fetchMediaLibrary = async () => {
+    try {
+      const response = await fetch('/api/admin/media', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setMediaLibrary(data)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mídia')
+    }
+  }
+
+  const openMediaModal = (field: string) => {
+    setSelectedField(field)
+    setShowMediaModal(true)
+    fetchMediaLibrary()
+  }
+
+  const selectMedia = (url: string) => {
+    updateField(selectedSection, selectedField, url)
+    setShowMediaModal(false)
   }
 
   useEffect(() => {
@@ -255,11 +301,20 @@ export default function AdminHomePage() {
                     </div>
                     <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
-                      <input
-                        value={content.hero.backgroundImage}
-                        onChange={event => updateField('hero', 'backgroundImage', event.target.value)}
-                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          value={content.hero.backgroundImage}
+                          onChange={event => updateField('hero', 'backgroundImage', event.target.value)}
+                          className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => openMediaModal('backgroundImage')}
+                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                        >
+                          Selecionar
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -324,6 +379,23 @@ export default function AdminHomePage() {
                     className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                   />
                 </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Imagem</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={content.about.image}
+                      onChange={event => updateField('about', 'image', event.target.value)}
+                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openMediaModal('image')}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Selecionar
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -365,6 +437,23 @@ export default function AdminHomePage() {
                       onChange={event => updateField('cta', 'buttonLink', event.target.value)}
                       className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
                     />
+                  </div>
+                </div>
+                <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={content.cta.backgroundImage}
+                      onChange={event => updateField('cta', 'backgroundImage', event.target.value)}
+                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => openMediaModal('backgroundImage')}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Selecionar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -518,6 +607,52 @@ export default function AdminHomePage() {
           </div>
         </aside>
       </div>
+
+      {showMediaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-xl">
+            <div className="border-b border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-slate-900">Selecionar Mídia</h2>
+                <button
+                  onClick={() => setShowMediaModal(false)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {mediaLibrary.items.filter(item => item.type === 'image').map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => selectMedia(item.url)}
+                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm"
+                  >
+                    <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
+                      <img
+                        src={item.url}
+                        alt={item.name}
+                        className="h-full w-full object-cover transition group-hover:scale-105"
+                      />
+                    </div>
+                    <p className="mt-3 text-sm font-medium text-slate-900 truncate" title={item.name}>
+                      {item.name}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              {mediaLibrary.items.filter(item => item.type === 'image').length === 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-slate-600">Nenhuma imagem encontrada.</p>
+                  <p className="mt-2 text-sm text-slate-500">Faça upload de imagens na Biblioteca de Mídia.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

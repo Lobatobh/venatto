@@ -25,6 +25,9 @@ export default async function AdminPage() {
           <Link href="/admin/home" className="inline-flex justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">
             Editar Página Inicial
           </Link>
+          <Link href="/admin/media" className="inline-flex justify-center rounded-full bg-green-600 px-5 py-3 text-sm font-semibold text-white hover:bg-green-700">
+            Biblioteca de Mídia
+          </Link>
           <Link href="/api/admin/logout" className="inline-flex justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
             Sair
           </Link>

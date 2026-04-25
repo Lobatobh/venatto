@@ -27,10 +27,15 @@ ADMIN_SESSION_SECRET=$(node -e "const crypto = require('crypto'); console.log(cr
 - `POST /api/admin/login` - login API
 - `GET /admin` - protected dashboard
 - `GET /admin/home` - home content editor
+- `GET /admin/media` - media library manager
 - `GET /api/admin/logout` - logout and clear session cookie
 - `GET /api/admin/me` - test auth state
 - `GET /api/admin/home` - get home content (admin)
 - `POST /api/admin/home` - update home content (admin)
+- `GET /api/admin/media` - get media library (admin)
+- `POST /api/admin/media` - upload media (admin)
+- `DELETE /api/admin/media?id=...` - delete media (admin)
+- `GET /api/media/[filename]` - serve media files (public)
 - `GET /api/home` - get home content (public)
 
 ## Data Persistence
@@ -46,6 +51,65 @@ Home content is persisted in a JSON file for simplicity and stability:
 ```
 data/
 +-- home.json
++-- media/
+    +-- library.json
+    +-- [uuid].ext (uploaded files)
+```
+
+### Media Library
+Media files (images, videos, PDFs) are managed through the admin panel and stored in the file system.
+
+- **Location**: `data/media/`
+- **Library File**: `data/media/library.json` - metadata for all uploaded files
+- **Upload Limits**:
+  - Images: up to 5MB (JPEG, PNG, WebP, SVG)
+  - Videos: up to 50MB (MP4, WebM, MOV)
+  - PDFs: up to 10MB
+- **Public Access**: Files are served via `/api/media/[filename]` without authentication
+- **Security**: Path traversal protection using `path.basename()`
+- **Caching**: 1-year cache headers for performance
+
+### Media Library JSON Format
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "type": "image" | "video" | "file",
+      "name": "original-filename.ext",
+      "filename": "uuid.ext",
+      "url": "/api/media/uuid.ext",
+      "mimeType": "image/png",
+      "size": 12345,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Home Content with Media
+The home content schema now supports media fields:
+
+```json
+{
+  "hero": {
+    "backgroundImage": "/api/media/uuid.png"
+  },
+  "about": {
+    "image": "/api/media/uuid.jpg"
+  },
+  "cta": {
+    "backgroundImage": "/api/media/uuid.png"
+  }
+}
+```
+
+### Docker Persistence
+For production deployment with Docker, ensure the `/data` volume is mounted to persist both home content and media files:
+
+```yaml
+volumes:
+  - venatto_data:/data
 ```
 
 ### Example Content
