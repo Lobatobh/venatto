@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateSessionToken, getSessionTokenFromRequest } from '@/lib/admin-session'
-import fs from 'fs/promises'
-import path from 'path'
-
-const filePath = path.join(process.cwd(), 'data', 'home.json')
+import { readHomeFile, normalizeHomeData, writeHomeFile, AdminHomeData, defaultHomeData } from '@/lib/home-content'
 
 export async function GET() {
   try {
-    const data = await fs.readFile(filePath, 'utf-8')
-    const content = JSON.parse(data)
+    const content = await readHomeFile()
     return NextResponse.json(content)
   } catch (error) {
     console.error('Error reading home content:', error)
-    // Return default content if file doesn't exist
-    const defaultContent = {
-      title: 'Bem-vindo ao Venatto',
-      subtitle: 'Soluções inovadoras para seu negócio',
-      buttonText: 'Saiba Mais'
-    }
-    return NextResponse.json(defaultContent)
+    return NextResponse.json(defaultHomeData)
   }
 }
 
@@ -34,15 +24,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
-    const { title, subtitle, buttonText } = await request.json()
+    const body = await request.json()
+    const content = normalizeHomeData(body)
 
-    const content = {
-      title: title || 'Elegância feita sob medida',
-      subtitle: subtitle || 'Mobiliário planejado de alto padrão',
-      buttonText: buttonText || 'Solicitar projeto'
-    }
-
-    await fs.writeFile(filePath, JSON.stringify(content, null, 2), 'utf-8')
+    await writeHomeFile(content)
 
     return NextResponse.json({ success: true, content })
   } catch (error) {

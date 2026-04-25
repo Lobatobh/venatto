@@ -6,6 +6,8 @@ This is a minimal admin panel for Venatto that supports secure login and session
 ## Purpose
 The public website remains unchanged. This admin flow is intentionally lightweight and does not manage site content yet.
 
+The `/admin/home` route now exposes a visual editor for home page content, with live preview and structured JSON persistence.
+
 ## Environment Variables
 Add the following to your environment:
 
@@ -35,10 +37,10 @@ ADMIN_SESSION_SECRET=$(node -e "const crypto = require('crypto'); console.log(cr
 Home content is persisted in a JSON file for simplicity and stability:
 
 - **Location**: `data/home.json`
-- **Format**: JSON with `title`, `subtitle`, and `buttonText` fields
+- **Format**: JSON with a structured page schema under `hero`, `about`, `cta`, `contact`, and `branding`
 - **Persistence**: Survives server restarts and persists between requests
 - **No Database**: Uses file system for now, ready for future database migration
-- **Public Integration**: Content is automatically loaded on the public home page
+- **Public Integration**: Content is automatically loaded on the public home page via `/api/home`
 
 ### File Structure
 ```
@@ -49,32 +51,51 @@ data/
 ### Example Content
 ```json
 {
-  "title": "Elegância feita sob medida",
-  "subtitle": "Mobiliário planejado de alto padrão",
-  "buttonText": "Solicitar projeto"
+  "hero": {
+    "title": "Elegância feita sob medida",
+    "highlight": "Móveis planejados",
+    "subtitle": "Mobiliário planejado de alto padrão para ambientes exclusivos",
+    "buttonText": "Solicitar projeto",
+    "buttonLink": "#contato",
+    "backgroundImage": "/images/hero.png"
+  },
+  "about": {
+    "eyebrow": "Sobre a Venatto",
+    "title": "Design que transforma espaços",
+    "text": "A Venatto desenvolve ambientes planejados de alto padrão, unindo design, funcionalidade e materiais nobres para criar espaços únicos. Cada projeto é pensado para refletir a personalidade e o estilo de vida de nossos clientes, transformando sonhos em realidade com excelência e sofisticação."
+  },
+  "cta": {
+    "title": "Pronto para transformar seu espaço?",
+    "subtitle": "Converse com a Venatto e inove seu ambiente com móveis planejados.",
+    "buttonText": "Fale conosco",
+    "buttonLink": "#contato"
+  },
+  "contact": {
+    "whatsapp": "",
+    "email": "",
+    "instagram": "",
+    "city": ""
+  },
+  "branding": {
+    "primaryColor": "#1F3D2B",
+    "secondaryColor": "#F5F3EF",
+    "accentColor": "#C6A46C"
+  }
 }
 ```
 
 ### Public Site Integration
-The public home page (`/`) automatically loads content from `data/home.json`:
-- Maps `title` → `heroTitle`
-- Maps `subtitle` → `heroSubtitle` 
-- Maps `buttonText` → `heroButtonText`
-- Falls back to default content if file is missing or invalid
-- No visual changes to layout, colors, or images
+The public home page (`/`) loads data from `data/home.json` and uses it to populate the home hero content.
+- Supports both the new structured format and the old legacy format
+- If the file contains the old legacy shape, the system migrates it automatically
+- No visual changes are made to the public page layout, colors, or images
 
 ### Future Migration Path
-When ready to integrate with the public site:
-1. Move data to database (Prisma)
-2. Update public site to fetch from database
+When ready to integrate more deeply with the public site:
+1. Move data to a database (Prisma)
+2. Update the public site to fetch structured page content
 3. Remove file-based persistence
-4. Add more content fields as needed
-- Cookie name: `venatto_admin_session`
-- HTTP-only cookie
-- `secure: false` for now
-- `sameSite: lax`
-- `path: /`
-- expires after 8 hours
+4. Expand the editor with more content sections
 
 ## How to use
 1. Start the app: `npm run dev`
