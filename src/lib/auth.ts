@@ -36,7 +36,7 @@ export async function createAdminSession(email: string): Promise<NextResponse> {
   const response = NextResponse.json({ success: true })
   response.cookies.set('venatto_admin_session', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24, // 24 hours
