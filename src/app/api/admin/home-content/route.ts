@@ -16,17 +16,29 @@ const homeContentSchema = z.object({
   contactText: z.string().min(1),
 })
 
-export async function GET() {
-  try {
-    const content = await db.homeContent.findFirst()
-    if (!content) {
-      return NextResponse.json({ error: 'Content not found' }, { status: 404 })
-    }
-    return NextResponse.json(content)
-  } catch (error) {
-    console.error('Get home content error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
+export async function GET(request: NextRequest) {
+  const authError = requireAuth(request)
+  if (authError) return authError
+
+  const content = await db.homeContent.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      heroTitle: 'Elegância feita sob medida',
+      heroSubtitle: 'Mobiliário planejado de alto padrão para ambientes exclusivos',
+      heroButtonText: 'Solicitar projeto',
+      heroButtonLink: '#contato',
+      heroImageUrl: '/images/hero.png',
+      aboutText: 'Conteúdo padrão',
+      differentialsText: 'Conteúdo padrão',
+      projectsText: 'Conteúdo padrão',
+      processText: 'Conteúdo padrão',
+      contactText: 'Conteúdo padrão',
+    },
+  })
+
+  return NextResponse.json(content)
 }
 
 export async function PUT(request: NextRequest) {
