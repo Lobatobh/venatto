@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 
+function getCookieFromHeader(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null
+
+  const cookies = cookieHeader.split(';').map(cookie => cookie.trim())
+
+  for (const cookie of cookies) {
+    const [key, ...valueParts] = cookie.split('=')
+    if (key === name) {
+      return decodeURIComponent(valueParts.join('='))
+    }
+  }
+
+  return null
+}
+
 export function verifyAdminSessionToken(token: string): boolean {
   try {
     const secret = process.env.ADMIN_SESSION_SECRET
@@ -14,7 +29,23 @@ export function verifyAdminSessionToken(token: string): boolean {
 }
 
 export function isAuthenticated(request: NextRequest): boolean {
-  const token = request.cookies.get('venatto_admin_session')?.value
+  const tokenFromNext = request.cookies.get('venatto_admin_session')?.value
+  const tokenFromHeader = getCookieFromHeader(
+    request.headers.get('cookie'),
+    'venatto_admin_session'
+  )
+
+  const token = tokenFromNext || tokenFromHeader
+
+  if (process.env.DEBUG_AUTH === 'true') {
+    console.log('[AUTH DEBUG]', {
+      hasNextCookie: Boolean(tokenFromNext),
+      hasHeaderCookie: Boolean(tokenFromHeader),
+      hasSecret: Boolean(process.env.ADMIN_SESSION_SECRET),
+      valid: token ? verifyAdminSessionToken(token) : false,
+    })
+  }
+
   return token ? verifyAdminSessionToken(token) : false
 }
 
