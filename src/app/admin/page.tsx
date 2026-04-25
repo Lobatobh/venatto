@@ -13,7 +13,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Check if authenticated
-    fetch('/api/admin/home-content')
+    fetch('/api/admin/home-content', { credentials: 'include' })
       .then((res) => {
         if (res.status === 401) {
           router.push('/admin/login')
