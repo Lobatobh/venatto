@@ -104,13 +104,61 @@ The home content schema now supports media fields:
 }
 ```
 
-### Docker Persistence
-For production deployment with Docker, ensure the `/data` volume is mounted to persist both home content and media files:
+## SEO Management
 
-```yaml
-volumes:
-  - venatto_data:/data
+SEO settings for the home page are managed through a draft/published system for safe content updates.
+
+### SEO Routes
+- `GET /admin/seo` - SEO editor page
+- `GET /api/admin/seo` - get SEO draft content
+- `POST /api/admin/seo` - save SEO draft
+- `PUT /api/admin/seo?action=publish` - publish SEO changes
+- `PUT /api/admin/seo?action=revert` - revert SEO to published version
+
+### SEO Draft/Published System
+Similar to home content, SEO uses a draft/published workflow:
+
+- **Draft**: `data/seo.draft.json` - working copy, always loaded in editor
+- **Published**: `data/seo.published.json` - live content, used by public site
+- **Fallback**: If published doesn't exist, draft is used as fallback
+
+### SEO File Structure
 ```
+data/
++-- seo.draft.json
++-- seo.published.json
+```
+
+### SEO JSON Format
+```json
+{
+  "title": "VENATTO | Mobiliário Planejado de Alto Padrão",
+  "description": "Elegância feita sob medida para ambientes exclusivos.",
+  "keywords": "móveis planejados, marcenaria, interiores, Venatto",
+  "ogImage": "/api/media/uuid.png",
+  "canonical": "https://venatto.com.br"
+}
+```
+
+### SEO Metadata Integration
+The root layout (`src/app/layout.tsx`) automatically loads published SEO data:
+
+- **Title**: Used for page title
+- **Description**: Used for meta description
+- **Keywords**: Split by comma and used for meta keywords
+- **Open Graph**: Title, description, and image for social sharing
+- **Canonical**: Used for canonical URL
+- **Fallback**: Static defaults if files don't exist or can't be read
+
+### SEO Editor Features
+- **Live Preview**: Google search result preview and social media cards
+- **Character Counts**: Real-time validation for title (50-60 chars) and description (150-160 chars)
+- **Image Upload**: Open Graph image selection from media library
+- **Draft/Published Status**: Visual indicators for current state
+- **Publish/Revert Actions**: Safe content deployment workflow
+
+### Docker Persistence
+SEO files are included in the same `/data` volume mount for persistence.
 
 ### Example Content
 ```json

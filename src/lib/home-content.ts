@@ -45,9 +45,20 @@ export interface HomeContent {
   projectsText: string
   processText: string
   contactText: string
+  whatsappNumber: string
+  email: string
+  instagram: string
+  city: string
+  projectImages: Array<{
+    src: string
+    alt: string
+    title: string
+    category: string
+  }>
 }
 
-const filePath = path.join('/', 'data', 'home.json')
+const draftFilePath = path.join('/', 'data', 'home.draft.json')
+const publishedFilePath = path.join('/', 'data', 'home.published.json')
 
 export const defaultHomeData: AdminHomeData = {
   hero: {
@@ -137,7 +148,7 @@ export function normalizeHomeData(data: any): AdminHomeData {
   }
 }
 
-async function ensureHomeFile() {
+async function ensureHomeFile(filePath: string) {
   try {
     await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.access(filePath)
@@ -147,30 +158,87 @@ async function ensureHomeFile() {
 }
 
 export async function readHomeFile(): Promise<AdminHomeData> {
+  return readHomeDraftFile()
+}
+
+export async function readHomeDraftFile(): Promise<AdminHomeData> {
   try {
-    await ensureHomeFile()
-    const data = await fs.readFile(filePath, 'utf-8')
+    await ensureHomeFile(draftFilePath)
+    const data = await fs.readFile(draftFilePath, 'utf-8')
     const parsed = JSON.parse(data)
     const normalized = normalizeHomeData(parsed)
 
     if (isLegacyPayload(parsed) || JSON.stringify(parsed) !== JSON.stringify(normalized)) {
-      await fs.writeFile(filePath, JSON.stringify(normalized, null, 2), 'utf-8')
+      await fs.writeFile(draftFilePath, JSON.stringify(normalized, null, 2), 'utf-8')
     }
 
     return normalized
   } catch (error) {
-    console.warn('Failed to load or normalize home content, using defaults:', error)
+    console.warn('Failed to load or normalize home draft content, using defaults:', error)
     return defaultHomeData
   }
 }
 
+export async function readHomePublishedFile(): Promise<AdminHomeData | null> {
+  try {
+    await fs.access(publishedFilePath)
+    const data = await fs.readFile(publishedFilePath, 'utf-8')
+    const parsed = JSON.parse(data)
+    return normalizeHomeData(parsed)
+  } catch (error) {
+    // Published file doesn't exist yet
+    return null
+  }
+}
+
 export async function writeHomeFile(content: AdminHomeData) {
-  await fs.mkdir(path.dirname(filePath), { recursive: true })
-  await fs.writeFile(filePath, JSON.stringify(normalizeHomeData(content), null, 2), 'utf-8')
+  return writeHomeDraftFile(content)
+}
+
+export async function writeHomeDraftFile(content: AdminHomeData) {
+  await fs.mkdir(path.dirname(draftFilePath), { recursive: true })
+  await fs.writeFile(draftFilePath, JSON.stringify(normalizeHomeData(content), null, 2), 'utf-8')
+}
+
+export async function writeHomePublishedFile(content: AdminHomeData) {
+  await fs.mkdir(path.dirname(publishedFilePath), { recursive: true })
+  await fs.writeFile(publishedFilePath, JSON.stringify(normalizeHomeData(content), null, 2), 'utf-8')
+}
+
+export async function publishHomeContent() {
+  const draftContent = await readHomeDraftFile()
+  await writeHomePublishedFile(draftContent)
+}
+
+export async function revertHomeContent() {
+  const publishedContent = await readHomePublishedFile()
+  if (publishedContent) {
+    await writeHomeDraftFile(publishedContent)
+  } else {
+    // If no published version exists, reset to defaults
+    await writeHomeDraftFile(defaultHomeData)
+  }
+}
+
+export async function hasUnpublishedChanges(): Promise<boolean> {
+  const draftContent = await readHomeDraftFile()
+  const publishedContent = await readHomePublishedFile()
+
+  if (!publishedContent) {
+    // If no published version exists, there are changes to publish
+    return true
+  }
+
+  return JSON.stringify(draftContent) !== JSON.stringify(publishedContent)
 }
 
 export async function getHomeContent(): Promise<HomeContent> {
-  const homeData = await readHomeFile()
+  // Try to read published content first, fallback to draft
+  let homeData = await readHomePublishedFile()
+  if (!homeData) {
+    homeData = await readHomeDraftFile()
+  }
+
   return {
     heroTitle: homeData.hero.title,
     heroSubtitle: homeData.hero.subtitle,
@@ -181,6 +249,48 @@ export async function getHomeContent(): Promise<HomeContent> {
     differentialsText: `${homeData.branding.primaryColor}, ${homeData.branding.secondaryColor}, ${homeData.branding.accentColor}`,
     projectsText: 'Portfólio de projetos realizados',
     processText: 'Entendimento, Projeto 3D, Produção, Entrega',
-    contactText: homeData.cta.subtitle
+    contactText: homeData.cta.subtitle,
+    whatsappNumber: homeData.contact.whatsapp || '5511999999999',
+    email: homeData.contact.email || 'contato@venatto.com.br',
+    instagram: homeData.contact.instagram || 'venatto',
+    city: homeData.contact.city || 'São Paulo, SP',
+    projectImages: [
+      {
+        src: "/images/gallery-kitchen.png",
+        alt: "Co gourmet com armários em verde escuro e bancada de mármore branco",
+        title: "Co Gourmet",
+        category: "Cozinhas",
+      },
+      {
+        src: "/images/gallery-bedroom.png",
+        alt: "Quarto master com closet planejado em nogueira",
+        title: "Quarto Master",
+        category: "Dormitórios",
+      },
+      {
+        src: "/images/gallery-dining.png",
+        alt: "Sala de jantar com mesa em madeira maciça e iluminação sofisticada",
+        title: "Sala de Jantar",
+        category: "Salas",
+      },
+      {
+        src: "/images/gallery-bathroom.png",
+        alt: "Banheiro premium com bancada em madeira escura e acabamentos em mármore",
+        title: "Banheiro Premium",
+        category: "Banheiros",
+      },
+      {
+        src: "/images/gallery-closet.png",
+        alt: "Closet planejado com iluminação LED e prateleiras em nogueira",
+        title: "Closet Exclusivo",
+        category: "Closets",
+      },
+      {
+        src: "/images/gallery-office.png",
+        alt: "Home office sofisticado com estante planejada e parede em verde escuro",
+        title: "Home Office",
+        category: "Escritórios",
+      },
+    ],
   }
 }

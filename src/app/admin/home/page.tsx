@@ -107,16 +107,25 @@ export default function AdminHomePage() {
   const [success, setSuccess] = useState('')
   const [isDirty, setIsDirty] = useState(false)
 
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+  const [reverting, setReverting] = useState(false)
+
   const [mediaLibrary, setMediaLibrary] = useState<MediaLibrary>({ items: [] })
   const [showMediaModal, setShowMediaModal] = useState(false)
   const [selectedField, setSelectedField] = useState<string>('')
+
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadedItem, setUploadedItem] = useState<MediaItem | null>(null)
 
   const fetchHomeContent = async () => {
     try {
       const response = await fetch('/api/admin/home', { credentials: 'include' })
       if (response.ok) {
         const data = await response.json()
-        setContent({ ...defaultHomeData, ...data })
+        setContent({ ...defaultHomeData, ...data.content })
+        setHasUnpublishedChanges(data.hasUnpublishedChanges)
       } else {
         setError('Erro ao carregar conteúdo')
       }
@@ -142,12 +151,80 @@ export default function AdminHomePage() {
   const openMediaModal = (field: string) => {
     setSelectedField(field)
     setShowMediaModal(true)
+    setUploading(false)
+    setUploadError('')
+    setUploadedItem(null)
     fetchMediaLibrary()
   }
 
   const selectMedia = (url: string) => {
     updateField(selectedSection, selectedField, url)
     setShowMediaModal(false)
+  }
+
+  const uploadFile = async (file: File) => {
+    // Validação
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Apenas imagens são permitidas')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Imagem deve ter no máximo 5MB')
+      return
+    }
+
+    setUploading(true)
+    setUploadError('')
+    setUploadedItem(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/admin/media', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUploadedItem(data.item)
+        
+        // Atualizar lista de mídias
+        await fetchMediaLibrary()
+        
+        // Selecionar automaticamente a imagem enviada
+        updateField(selectedSection, selectedField, data.item.url)
+        setShowMediaModal(false)
+      } else {
+        const data = await response.json()
+        setUploadError(data.error || 'Erro ao fazer upload')
+      }
+    } catch (error) {
+      setUploadError('Erro de rede')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      uploadFile(file)
+    }
+  }
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const file = event.dataTransfer.files?.[0]
+    if (file) {
+      uploadFile(file)
+    }
+  }
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
   }
 
   useEffect(() => {
@@ -183,16 +260,77 @@ export default function AdminHomePage() {
       })
 
       if (response.ok) {
-        setSuccess('Conteúdo salvo com sucesso!')
+        setSuccess('Rascunho salvo com sucesso!')
         setIsDirty(false)
+        setHasUnpublishedChanges(true)
       } else {
         const data = await response.json()
         setError(data.error || 'Erro ao salvar')
       }
     } catch (error) {
       setError('Erro de rede')
+    }
+  }
+
+  const handlePublish = async () => {
+    setPublishing(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await fetch('/api/admin/home', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'publish' })
+      })
+
+      if (response.ok) {
+        setSuccess('Alterações publicadas com sucesso!')
+        setHasUnpublishedChanges(false)
+        setIsDirty(false)
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Erro ao publicar')
+      }
+    } catch (error) {
+      setError('Erro de rede')
     } finally {
-      setSaving(false)
+      setPublishing(false)
+    }
+  }
+
+  const handleRevert = async () => {
+    if (!confirm('Tem certeza que deseja reverter todas as alterações não publicadas? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    setReverting(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await fetch('/api/admin/home', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'revert' })
+      })
+
+      if (response.ok) {
+        setSuccess('Alterações revertidas com sucesso!')
+        setHasUnpublishedChanges(false)
+        setIsDirty(false)
+        // Recarregar conteúdo
+        await fetchHomeContent()
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Erro ao reverter')
+      }
+    } catch (error) {
+      setError('Erro de rede')
+    } finally {
+      setReverting(false)
     }
   }
 
@@ -215,9 +353,37 @@ export default function AdminHomePage() {
             <h1 className="text-2xl font-semibold text-slate-900">Construtor de Home Premium</h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${saving ? 'bg-amber-100 text-amber-800' : isDirty ? 'bg-slate-100 text-slate-800' : 'bg-emerald-100 text-emerald-800'}`}>
-              {saving ? 'Salvando...' : isDirty ? 'Alterações pendentes' : 'Salvo'}
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              saving ? 'bg-amber-100 text-amber-800' : 
+              publishing ? 'bg-blue-100 text-blue-800' :
+              reverting ? 'bg-orange-100 text-orange-800' :
+              hasUnpublishedChanges ? 'bg-yellow-100 text-yellow-800' : 
+              'bg-emerald-100 text-emerald-800'
+            }`}>
+              {saving ? 'Salvando...' : 
+               publishing ? 'Publicando...' :
+               reverting ? 'Revertendo...' :
+               hasUnpublishedChanges ? 'Alterações não publicadas' : 
+               'Publicado'}
             </span>
+            {hasUnpublishedChanges && (
+              <>
+                <button
+                  onClick={handleRevert}
+                  disabled={reverting}
+                  className="rounded-full border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+                >
+                  Reverter alterações
+                </button>
+                <button
+                  onClick={handlePublish}
+                  disabled={publishing}
+                  className="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-60"
+                >
+                  Publicar alterações
+                </button>
+              </>
+            )}
             <Link href="/admin" className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100">Voltar</Link>
             <Link href="/" target="_blank" className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Visualizar site</Link>
             <button
@@ -225,7 +391,7 @@ export default function AdminHomePage() {
               disabled={saving}
               className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
-              Salvar alterações
+              Salvar rascunho
             </button>
           </div>
         </div>
@@ -689,13 +855,51 @@ export default function AdminHomePage() {
               </div>
             </div>
             <div className="max-h-[70vh] overflow-y-auto p-6">
+              {/* Upload Area */}
+              <div className="mb-6">
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  className="relative cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center transition hover:border-slate-400 hover:bg-slate-100"
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"></div>
+                      <p className="text-sm text-slate-600">Enviando imagem...</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="text-4xl">📤</div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">Arraste uma imagem ou clique para enviar</p>
+                        <p className="text-xs text-slate-500 mt-1">PNG, JPG, GIF até 5MB</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {uploadError && (
+                  <p className="mt-3 text-sm text-red-600">{uploadError}</p>
+                )}
+              </div>
+
               {mediaLibrary.items.filter(item => item.type === 'image').length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {mediaLibrary.items.filter(item => item.type === 'image').map(item => (
                     <button
                       key={item.id}
                       onClick={() => selectMedia(item.url)}
-                      className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-white p-3 transition-all hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                      className={`group relative overflow-hidden rounded-2xl border-2 bg-white p-3 transition-all hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 ${
+                        uploadedItem?.id === item.id 
+                          ? 'border-emerald-400 ring-2 ring-emerald-200' 
+                          : 'border-transparent hover:border-slate-300'
+                      }`}
                     >
                       <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
                         <img

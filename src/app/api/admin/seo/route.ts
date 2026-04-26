@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateSessionToken, getSessionTokenFromRequest } from '@/lib/admin-session'
-import { readHomeDraftFile, normalizeHomeData, writeHomeDraftFile, publishHomeContent, revertHomeContent, hasUnpublishedChanges, AdminHomeData, defaultHomeData } from '@/lib/home-content'
+import { readSeoDraftFile, writeSeoDraftFile, publishSeoContent, revertSeoContent, hasUnpublishedSeoChanges, SeoData, defaultSeoData } from '@/lib/seo-content'
 
 export async function GET() {
   try {
-    const content = await readHomeDraftFile()
-    const hasChanges = await hasUnpublishedChanges()
+    const content = await readSeoDraftFile()
+    const hasChanges = await hasUnpublishedSeoChanges()
     return NextResponse.json({ content, hasUnpublishedChanges: hasChanges })
   } catch (error) {
-    console.error('Error reading home content:', error)
-    return NextResponse.json({ content: defaultHomeData, hasUnpublishedChanges: false })
+    console.error('Error reading SEO content:', error)
+    return NextResponse.json({ content: defaultSeoData, hasUnpublishedChanges: false })
   }
 }
 
@@ -26,13 +26,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const content = normalizeHomeData(body)
+    const content: SeoData = {
+      title: body.title || defaultSeoData.title,
+      description: body.description || defaultSeoData.description,
+      keywords: body.keywords || defaultSeoData.keywords,
+      ogImage: body.ogImage || defaultSeoData.ogImage,
+      canonical: body.canonical || defaultSeoData.canonical
+    }
 
-    await writeHomeDraftFile(content)
+    await writeSeoDraftFile(content)
 
     return NextResponse.json({ success: true, content })
   } catch (error) {
-    console.error('Home content update error:', error)
+    console.error('SEO content update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -53,16 +59,16 @@ export async function PUT(request: NextRequest) {
     const { action } = body
 
     if (action === 'publish') {
-      await publishHomeContent()
-      return NextResponse.json({ success: true, message: 'Conteúdo publicado com sucesso' })
+      await publishSeoContent()
+      return NextResponse.json({ success: true, message: 'SEO publicado com sucesso' })
     } else if (action === 'revert') {
-      await revertHomeContent()
-      return NextResponse.json({ success: true, message: 'Alterações revertidas com sucesso' })
+      await revertSeoContent()
+      return NextResponse.json({ success: true, message: 'SEO revertido com sucesso' })
     } else {
       return NextResponse.json({ error: 'Ação inválida' }, { status: 400 })
     }
   } catch (error) {
-    console.error('Home content action error:', error)
+    console.error('SEO content action error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
