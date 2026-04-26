@@ -2,6 +2,9 @@ FROM node:20-slim
 
 WORKDIR /app
 
+# CACHE BUST: force rebuild e garantir código mais recente sem Prisma no SEO público
+# Alterar este comentário é suficiente para invalidar cache em deploys que não suportam opção no UI.
+
 # Instalar OpenSSL necessário para Prisma
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
