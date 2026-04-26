@@ -301,20 +301,41 @@ export default function AdminHomePage() {
                     </div>
                     <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                       <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
-                      <div className="flex gap-2">
-                        <input
-                          value={content.hero.backgroundImage}
-                          onChange={event => updateField('hero', 'backgroundImage', event.target.value)}
-                          className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                        />
+                      {content.hero.backgroundImage ? (
+                        <div className="space-y-3">
+                          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                            <img
+                              src={content.hero.backgroundImage}
+                              alt="Preview"
+                              className="h-40 w-full object-cover"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openMediaModal('backgroundImage')}
+                              className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                            >
+                              Alterar Imagem
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateField('hero', 'backgroundImage', '')}
+                              className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                            >
+                              Remover
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => openMediaModal('backgroundImage')}
-                          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                          className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:bg-slate-100"
                         >
-                          Selecionar
+                          + Selecionar Imagem
                         </button>
-                      </div>
+                      )}
                     </div>
                   </div>
                   <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -381,20 +402,41 @@ export default function AdminHomePage() {
                 </div>
                 <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <label className="text-sm font-medium text-slate-700">Imagem</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={content.about.image}
-                      onChange={event => updateField('about', 'image', event.target.value)}
-                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
+                  {content.about.image ? (
+                    <div className="space-y-3">
+                      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                        <img
+                          src={content.about.image}
+                          alt="Preview"
+                          className="h-40 w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openMediaModal('image')}
+                          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                        >
+                          Alterar Imagem
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateField('about', 'image', '')}
+                          className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                     <button
                       type="button"
                       onClick={() => openMediaModal('image')}
-                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                      className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:bg-slate-100"
                     >
-                      Selecionar
+                      + Selecionar Imagem
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -441,20 +483,41 @@ export default function AdminHomePage() {
                 </div>
                 <div className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <label className="text-sm font-medium text-slate-700">Imagem de fundo</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={content.cta.backgroundImage}
-                      onChange={event => updateField('cta', 'backgroundImage', event.target.value)}
-                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-900"
-                    />
+                  {content.cta.backgroundImage ? (
+                    <div className="space-y-3">
+                      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                        <img
+                          src={content.cta.backgroundImage}
+                          alt="Preview"
+                          className="h-40 w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openMediaModal('backgroundImage')}
+                          className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                        >
+                          Alterar Imagem
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateField('cta', 'backgroundImage', '')}
+                          className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
                     <button
                       type="button"
                       onClick={() => openMediaModal('backgroundImage')}
-                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                      className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm font-medium text-slate-600 transition hover:border-slate-400 hover:bg-slate-100"
                     >
-                      Selecionar
+                      + Selecionar Imagem
                     </button>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
@@ -609,44 +672,63 @@ export default function AdminHomePage() {
       </div>
 
       {showMediaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl">
             <div className="border-b border-slate-200 p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-slate-900">Selecionar Mídia</h2>
+                <div>
+                  <h2 className="text-xl font-semibold text-slate-900">Biblioteca de Mídia</h2>
+                  <p className="mt-1 text-sm text-slate-600">Selecione uma imagem para usar neste campo</p>
+                </div>
                 <button
                   onClick={() => setShowMediaModal(false)}
-                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
                 >
                   ✕
                 </button>
               </div>
             </div>
-            <div className="p-6">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {mediaLibrary.items.filter(item => item.type === 'image').map(item => (
-                  <button
-                    key={item.id}
-                    onClick={() => selectMedia(item.url)}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm"
+            <div className="max-h-[70vh] overflow-y-auto p-6">
+              {mediaLibrary.items.filter(item => item.type === 'image').length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {mediaLibrary.items.filter(item => item.type === 'image').map(item => (
+                    <button
+                      key={item.id}
+                      onClick={() => selectMedia(item.url)}
+                      className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-white p-3 transition-all hover:border-slate-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+                    >
+                      <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
+                        <img
+                          src={item.url}
+                          alt={item.name}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="mt-3 text-left">
+                        <p className="text-sm font-medium text-slate-900 truncate" title={item.name}>
+                          {item.name}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {(item.size / 1024 / 1024).toFixed(1)} MB
+                        </p>
+                      </div>
+                      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-slate-400 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="text-6xl mb-4">🖼️</div>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Nenhuma imagem encontrada</h3>
+                  <p className="text-slate-600 mb-6 max-w-md">
+                    Você ainda não fez upload de nenhuma imagem. Vá para a Biblioteca de Mídia para adicionar imagens.
+                  </p>
+                  <Link
+                    href="/admin/media"
+                    className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                   >
-                    <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="h-full w-full object-cover transition group-hover:scale-105"
-                      />
-                    </div>
-                    <p className="mt-3 text-sm font-medium text-slate-900 truncate" title={item.name}>
-                      {item.name}
-                    </p>
-                  </button>
-                ))}
-              </div>
-              {mediaLibrary.items.filter(item => item.type === 'image').length === 0 && (
-                <div className="py-12 text-center">
-                  <p className="text-slate-600">Nenhuma imagem encontrada.</p>
-                  <p className="mt-2 text-sm text-slate-500">Faça upload de imagens na Biblioteca de Mídia.</p>
+                    Ir para Biblioteca de Mídia
+                  </Link>
                 </div>
               )}
             </div>
