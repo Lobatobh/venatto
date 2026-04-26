@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel, Montserrat } from "next/font/google";
-import { db } from "@/lib/db";
+import { getSeoContent } from "@/lib/seo-content";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -18,75 +18,32 @@ const montserrat = Montserrat({
 // Force dynamic rendering to prevent build-time database access
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata(): Promise<Metadata> {
-  // Check if environment variables are available (runtime only)
-  if (!process.env.DATABASE_URL || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH) {
-    return {
-      title: "VENATTO | Mobiliário Planejado de Alto Padrão",
-      description: "Especialistas em arquitetura e design de interiores",
-      keywords: ["arquitetura", "design", "interiores"],
-      authors: [{ name: "VENATTO" }],
-      icons: {
-        icon: "/favicon.ico",
-      },
-    };
-  }
-
+export async function generateMetadata() {
   try {
-    const seoSettings = await db.seoSettings.findFirst();
+    const seo = await getSeoContent()
 
-    if (seoSettings) {
-      return {
-        title: seoSettings.title,
-        description: seoSettings.description,
-        keywords: seoSettings.keywords.split(',').map(k => k.trim()),
-        authors: [{ name: "VENATTO" }],
-        icons: {
-          icon: "/favicon.ico",
-        },
-        openGraph: {
-          title: seoSettings.title,
-          description: seoSettings.description,
-          type: "website",
-          locale: "pt_BR",
-          images: seoSettings.ogImageUrl ? [{ url: seoSettings.ogImageUrl }] : undefined,
-        },
-        alternates: {
-          canonical: seoSettings.canonicalUrl,
-        },
-      };
+    return {
+      title: seo.title,
+      description: seo.description,
+      keywords: seo.keywords,
+      alternates: {
+        canonical: seo.canonical,
+      },
+      openGraph: {
+        title: seo.title,
+        description: seo.description,
+        url: seo.canonical,
+        images: seo.ogImage ? [{ url: seo.ogImage }] : [],
+        type: 'website',
+        locale: 'pt_BR',
+      },
     }
-  } catch (error) {
-    console.error('Error fetching SEO settings:', error);
+  } catch {
+    return {
+      title: 'VENATTO | Mobiliário Planejado de Alto Padrão',
+      description: 'Elegância feita sob medida para ambientes exclusivos.',
+    }
   }
-
-  // Fallback to static metadata
-  return {
-    title: "VENATTO | Mobiliário Planejado de Alto Padrão",
-    description:
-      "Elegância feita sob medida. Mobiliário planejado de alto padrão para ambientes exclusivos. Projetos exclusivos, atendimento personalizado e materiais premium.",
-    keywords: [
-      "VENATTO",
-      "móveis planejados",
-      "alto padrão",
-      "mobiliário premium",
-      "design de interiores",
-      "ambientes exclusivos",
-      "projetos sob medida",
-      "luxo",
-    ],
-    authors: [{ name: "VENATTO" }],
-    icons: {
-      icon: "/favicon.ico",
-    },
-    openGraph: {
-      title: "VENATTO | Mobiliário Planejado de Alto Padrão",
-      description:
-        "Elegância feita sob medida. Mobiliário planejado de alto padrão para ambientes exclusivos.",
-      type: "website",
-      locale: "pt_BR",
-    },
-  };
 }
 
 export default function RootLayout({
