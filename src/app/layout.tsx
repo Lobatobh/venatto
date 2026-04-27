@@ -20,7 +20,6 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   try {
-    console.log("SEO VERSION 2 - JSON MODE")
     const seo = await getSeoContent()
 
     return {
